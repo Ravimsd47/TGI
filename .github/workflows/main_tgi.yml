@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -24,40 +24,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm install
-          npm run build
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcairo2-dev pkg-config python3-dev
-
+      # 🛠️ Local Build Section (Optional)
+      # The following section in your workflow is designed to catch build issues early on the client side, before deployment. This can be helpful for debugging and validation. However, if this step significantly increases deployment time and early detection is not critical for your workflow, you may remove this section to streamline the deployment process.
       - name: Create and Start virtual environment and Install dependencies
         run: |
           python -m venv antenv
           source antenv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
-
-      - name: Copy requirements.txt to root for Oryx
-        run: cp backend/requirements.txt ./requirements.txt
-
+          pip install -r requirements.txt
+                
+      # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size. 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: |
-            backend/
-            frontend/dist/
-            requirements.txt
+            .
+            !antenv/
+
+      # 🚫 Opting Out of Oryx Build
+      # If you prefer to disable the Oryx build process during deployment, follow these steps:
+      # 1. Remove the SCM_DO_BUILD_DURING_DEPLOYMENT app setting from your Azure App Service Environment variables.
+      # 2. Refer to sample workflows for alternative deployment strategies: https://github.com/Azure/actions-workflow-samples/tree/master/AppService
+      
 
   deploy:
     runs-on: ubuntu-latest
@@ -75,9 +63,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DAA5CE20390D4D05A820730F3DB525A2 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_95604DEDDA2B4121955B85066F4028B2 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A145BE7B628A4B52B93DCC116C13A44D }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_58AB1C13CBA3462B8B997827CE97ECE6 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3A71E9C4862340F196FF5EEDB5F5BB33 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8FD4D16875CE4BB8899AE8F7CF33DDDF }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
