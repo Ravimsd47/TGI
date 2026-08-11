@@ -15,9 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.http import FileResponse
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist"
+
+
+def frontend(request):
+    return FileResponse(open(FRONTEND_DIR / "index.html", "rb"))
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('booking_system.urls')),
+    path("admin/", admin.site.urls),
+    path("api/", include("booking_system.urls")),
+    re_path(r"^(?!api/|admin/).*$", frontend),
 ]
