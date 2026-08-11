@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from pathlib import Path
+import traceback
+from django.db import connection
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist"
@@ -27,8 +29,19 @@ def frontend(request):
     return FileResponse(open(FRONTEND_DIR / "index.html", "rb"))
 
 
+def test_db(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            row = cursor.fetchone()
+        return HttpResponse(f"Connection successful: {row}", content_type="text/plain")
+    except Exception as e:
+        return HttpResponse(traceback.format_exc(), content_type="text/plain")
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/test-db/", test_db),
     path("api/", include("booking_system.urls")),
     re_path(r"^(?!api/|admin/).*$", frontend),
 ]
