@@ -86,4 +86,4 @@ jobs:
         with:
           app-name: 'TGI'
           slot-name: 'Production'
-          startup-command: 'gunicorn --chdir /home/site/wwwroot/backend --bind 0.0.0.0:8000 --timeout 600 tgi_backend.wsgi:application'
+          startup-command: 'gunicorn --bind 0.0.0.0:8000 --timeout 600 --chdir backend tgi_backend.wsgi:application'
